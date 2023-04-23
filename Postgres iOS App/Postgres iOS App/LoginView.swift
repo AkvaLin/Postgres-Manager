@@ -17,11 +17,11 @@ struct LoginView: View {
     
     var body: some View {
         VStack {
-            Text("Логин:")
+            Text("Login:")
             TextField("Enter login", text: $login)
                 .padding(.bottom, 8)
             
-            Text("Пароль:")
+            Text("Password:")
             ZStack(alignment: .trailing) {
                 Group {
                     if isSecured {
