@@ -8,7 +8,7 @@
 import Foundation
 import PostgresKit
 
-class LoginViewModel {
+class LoginViewModel: ObservableObject {
     
     private var eventLoopGroup: MultiThreadedEventLoopGroup? = nil
     private let logger = Logger(label: "postgres-logger")

@@ -13,7 +13,7 @@ struct LoginView: View {
     @State var password: String = ""
     @State var isSecured: Bool = true
     
-    private let viewModel = LoginViewModel()
+    @StateObject private var viewModel = LoginViewModel()
     
     var body: some View {
         VStack {
