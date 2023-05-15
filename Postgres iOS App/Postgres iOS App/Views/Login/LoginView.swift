@@ -31,55 +31,58 @@ struct LoginView: View {
     }
     
     var body: some View {
-        VStack {
-            Text("Login:")
-            TextField("Enter login", text: $login)
+        NavigationStack {
+            VStack {
+                Text("Login:")
+                TextField("Enter login", text: $login)
+                    .padding(.bottom, 8)
+                
+                Text("Password:")
+                AnimatedSecureTextField(text: $password, titleKey: "Enter password")
                 .padding(.bottom, 8)
-            
-            Text("Password:")
-            AnimatedSecureTextField(text: $password, titleKey: "Enter password")
-            .padding(.bottom, 8)
-            
-            Button("Connect", action: {
-                Task {
-                    await viewModel.connect(login: login, password: password) { result in
-                        switch result {
-                        case .connectionError:
-                            alertText = "Не удалось установить соединение с базой данных"
-                            showingAlert = true
-                        case .loginError:
-                            alertText = "Пользователя с данным логином не существует"
-                            showingAlert = true
-                        case .passwordError:
-                            alertText = "Неверный пароль"
-                            showingAlert = true
-                        case .unknownError:
-                            alertText = "Неизвестная ошибка. Попробуйте позже"
-                            showingAlert = true
-                        case .dataError:
-                            alertText = "Ошибка базы данных"
-                            showingAlert = true
-                        case .success:
-                            break
-                        case .queryError:
-                            alertText = "Не удалось отправить запрос к базе данных"
-                            showingAlert = true
+                
+                Button("Connect", action: {
+                    Task {
+                        await viewModel.connect(login: login, password: password) { result in
+                            switch result {
+                            case .connectionError:
+                                alertText = "Не удалось установить соединение с базой данных"
+                                showingAlert = true
+                            case .loginError:
+                                alertText = "Пользователя с данным логином не существует"
+                                showingAlert = true
+                            case .passwordError:
+                                alertText = "Неверный пароль"
+                                showingAlert = true
+                            case .unknownError:
+                                alertText = "Неизвестная ошибка. Попробуйте позже"
+                                showingAlert = true
+                            case .dataError:
+                                alertText = "Ошибка базы данных"
+                                showingAlert = true
+                            case .success:
+                                break
+                            case .queryError:
+                                alertText = "Не удалось отправить запрос к базе данных"
+                                showingAlert = true
+                            }
                         }
                     }
-                }
-            })
-            .buttonStyle(.borderedProminent)
-            .disabled(login.isEmpty || password.isEmpty)
-            Toggle("Save login data", isOn: $viewModel.isSaveEnabled)
-                .toggleStyle(iOSCheckboxToggleStyle())
-                .tint(.primary)
-                .padding()
+                })
+                .buttonStyle(.borderedProminent)
+                .disabled(login.isEmpty || password.isEmpty)
+                Toggle("Save login data", isOn: $viewModel.isSaveEnabled)
+                    .toggleStyle(iOSCheckboxToggleStyle())
+                    .tint(.primary)
+                    .padding()
+            }
+            .padding()
+            .textFieldStyle(.roundedBorder)
+            .alert(alertText, isPresented: $showingAlert) {
+                Button("OK", role: .cancel) { }
+            }
         }
-        .padding()
-        .textFieldStyle(.roundedBorder)
-        .alert(alertText, isPresented: $showingAlert) {
-            Button("OK", role: .cancel) { }
-        }
+        .environmentObject(viewModel)
     }
 }
 
