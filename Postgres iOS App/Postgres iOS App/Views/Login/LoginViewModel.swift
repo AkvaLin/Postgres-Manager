@@ -106,6 +106,36 @@ class LoginViewModel: ObservableObject {
         }
     }
     
+    public func getAllClientsData() async -> [ClientModel] {
+        do {
+            let clientsData = try await connection?.query("select * from client join client_status using (client_status_id)", logger: logger)
+            guard let clientsData = clientsData else { return [ClientModel]() }
+            var clients = [ClientModel]()
+            for try await (_, client_id, phone_number, email, name, title, _) in clientsData.decode((Int, Int, String, String, String, String, Int).self) {
+                clients.append(ClientModel(id: client_id, name: name, phoneNumber: phone_number, email: email, status: title))
+            }
+            return clients
+        } catch {
+            return [ClientModel]()
+        }
+    }
+    
+    public func deleteClientRow(id: Int) async {
+        do {
+            try await connection?.query("CALL delete_client(\(id)", logger: logger)
+        } catch {
+            
+        }
+    }
+    
+    public func addClientRow(phoneNumber: String, email: String, name: String) async {
+        do {
+            try await connection?.query("insert into client values (default, \(phoneNumber), \(email), 1, \(name)", logger: logger)
+        } catch {
+            
+        }
+    }
+    
     private func setEventLoopGroup() {
         DispatchQueue.global(qos: .background).async {
             self.eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: 1)
