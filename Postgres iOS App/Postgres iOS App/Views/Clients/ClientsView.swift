@@ -53,6 +53,11 @@ struct ClientsView: View {
                 AddClientView()
             }
             .listStyle(.inset)
+            .refreshable {
+                Task {
+                    await viewModel.update()
+                }
+            }
     }
     
     private func delete(at offsets: IndexSet) {

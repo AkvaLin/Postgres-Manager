@@ -67,9 +67,13 @@ class ClientsViewModel: ObservableObject {
         await viewModel.deleteClientRow(id: id)
     }
     
-    public func deleteWithUpdate(id: Int) async {
+    public func update() async {
         guard let viewModel = viewModel else { return }
-        await self.delete(id: id)
         clientsData = await viewModel.getAllClientsData()
+    }
+    
+    public func deleteWithUpdate(id: Int) async {
+        await self.delete(id: id)
+        await self.update()
     }
 }
