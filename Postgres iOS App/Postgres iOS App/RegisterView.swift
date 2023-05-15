@@ -26,17 +26,9 @@ struct RegisterView: View {
             AnimatedSecureTextField(text: $viewModel.secondPassword, titleKey: "Confirm password")
                 .padding([.horizontal, .bottom])
             
-            Picker("Please choose a color", selection: $viewModel.selectedRole) {
-                ForEach(viewModel.roles, id: \.self) {
-                    Text($0)
-                }
-            }
-            
             if showGroup
             {
                 TextField("Age", text: $viewModel.age)
-                    .padding([.leading, .trailing])
-                TextField("Job title", text: $viewModel.jobTitle)
                     .padding([.leading, .trailing])
                 TextField("Full name", text: $viewModel.fullName)
                     .padding([.leading, .trailing])
@@ -44,6 +36,20 @@ struct RegisterView: View {
                     .padding([.leading, .trailing])
                 TextField("Work experience", text: $viewModel.workExperience)
                     .padding([.leading, .trailing])
+            }
+            
+            Picker("Please choose a role", selection: $viewModel.selectedRole) {
+                ForEach(viewModel.roles, id: \.self) {
+                    Text($0)
+                }
+            }
+            .pickerStyle(.segmented)
+            .padding([.leading, .trailing, .top])
+            
+            Picker("Please choose a job title", selection: $viewModel.selectedJob) {
+                ForEach(viewModel.jobs, id: \.self) {
+                    Text($0)
+                }
             }
             
             Button {

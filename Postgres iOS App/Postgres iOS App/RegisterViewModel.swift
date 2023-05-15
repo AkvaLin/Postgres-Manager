@@ -16,7 +16,7 @@ class RegisterViewModel: ObservableObject {
     @Published public var password = ""
     @Published public var secondPassword = ""
     @Published public var age = ""
-    @Published public var jobTitle = ""
+    @Published public var selectedJob = "None"
     @Published public var fullName = ""
     @Published public var phoneNumber = ""
     @Published public var workExperience = ""
@@ -26,7 +26,8 @@ class RegisterViewModel: ObservableObject {
     
     @EnvironmentObject var loginViewModel: LoginViewModel
     
-    public var roles = ["Adminisrator", "Manager", "Employee"]
+    public var roles = ["Employee", "Manager", "Adminisrator"]
+    public var jobs = ["None"]
     private var storage: Set<AnyCancellable> = []
     
     init() {
@@ -34,7 +35,7 @@ class RegisterViewModel: ObservableObject {
         setupPublisher(publisher: $password)
         setupPublisher(publisher: $secondPassword)
         setupPublisher(publisher: $age)
-        setupPublisher(publisher: $jobTitle)
+        setupPublisher(publisher: $selectedJob)
         setupPublisher(publisher: $fullName)
         setupPublisher(publisher: $phoneNumber)
         setupPublisher(publisher: $workExperience)
@@ -69,7 +70,6 @@ class RegisterViewModel: ObservableObject {
         
         if isLoginAndPasswordEntered,
            !age.isEmpty,
-           !jobTitle.isEmpty,
            !fullName.isEmpty,
            !phoneNumber.isEmpty,
            !workExperience.isEmpty {
