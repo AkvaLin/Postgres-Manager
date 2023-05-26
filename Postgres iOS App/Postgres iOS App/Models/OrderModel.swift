@@ -9,8 +9,9 @@ import Foundation
 
 struct OrderModel {
     let id: Int
-    let totalCost: Int
-    let rating: Int
+    let totalCost: String
+    let rating: String
     let clientName: String
     let employeeName: String
+    var date: Date? = nil
 }

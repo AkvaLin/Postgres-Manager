@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct ClientModel {
+struct ClientModel: Hashable {
     let id: Int
     let name: String
     let phoneNumber: String
