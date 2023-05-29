@@ -8,17 +8,26 @@
 import SwiftUI
 
 struct AddClientView: View {
-    
+
     @StateObject private var viewModel = AddClientViewModel()
     @EnvironmentObject private var connectionVM: LoginViewModel
+    
+    @FocusState private var focusedName: Bool
+    @FocusState private var focusedEmail: Bool
+    @FocusState private var focusedPhone: Bool
     
     var body: some View {
         ZStack {
             VStack {
                 Group {
                     TextField("Enter name", text: $viewModel.name)
+                        .focused($focusedName)
                     TextField("Enter email", text: $viewModel.email)
+                        .focused($focusedEmail)
+                        .keyboardType(.emailAddress)
                     TextField("Enter phone number", text: $viewModel.phoneNumber)
+                        .focused($focusedPhone)
+                        .keyboardType(.phonePad)
                     Button("Add client", action: {
                         Task {
                             await viewModel.addClient()
@@ -45,6 +54,33 @@ struct AddClientView: View {
         }
         .alert("Failed to add client", isPresented: $viewModel.showAlert) {
             Button("OK", role: .cancel) { }
+        }
+        .onSubmit {
+            if focusedName {
+                focusedName = false
+                focusedEmail = true
+            }
+            if focusedEmail {
+                focusedEmail = false
+                focusedPhone = true
+            }
+            if focusedPhone {
+                focusedPhone = false
+            }
+        }
+        .onTapGesture {
+            focusedName = false
+            focusedEmail = false
+            focusedPhone = false
+        }
+        .toolbar {
+            ToolbarItem(placement: .keyboard) {
+                Button("Done") {
+                    focusedName = false
+                    focusedEmail = false
+                    focusedPhone = false
+                }
+            }
         }
         .navigationTitle("Add Client")
     }

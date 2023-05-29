@@ -13,6 +13,8 @@ struct AddOrderView: View {
     @EnvironmentObject private var connectionVM: LoginViewModel
     @ObservedObject private var viewModel = AddOrderViewModel()
     
+    @FocusState private var isFocused: Bool
+    
     var body: some View {
         ZStack {
             VStack {
@@ -49,6 +51,7 @@ struct AddOrderView: View {
                     Text("Rating: ")
                         .padding()
                     TextField("Enter rating", text: $viewModel.ratingText)
+                        .focused($isFocused)
                         .multilineTextAlignment(.trailing)
                         .keyboardType(.numberPad)
                         .onReceive(Just(viewModel.ratingText)) { newValue in
@@ -128,6 +131,21 @@ struct AddOrderView: View {
         }
         .alert("Failed to add order", isPresented: $viewModel.showOrderAlert) {
             Button("OK", role: .cancel) { }
+        }
+        .onTapGesture { 
+            isFocused = false
+        }
+        .toolbar {
+            ToolbarItem(placement: .keyboard) {
+                Button("Done") {
+                    isFocused = false
+                }
+            }
+        }
+        .onSubmit {
+            if isFocused {
+                isFocused = false
+            }
         }
     }
 }
