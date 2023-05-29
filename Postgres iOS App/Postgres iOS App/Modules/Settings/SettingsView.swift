@@ -39,6 +39,50 @@ struct SettingsView: View {
                 .buttonStyle(.borderedProminent)
                 .padding()
                 Spacer()
+                    .fullScreenCover(isPresented: $viewModel.isReportViewPresented) {
+                        ReportView(data: viewModel.reportData, isEmployee: viewModel.isEmployee)
+                            .environmentObject(viewModel)
+                    }
+                    .popover(isPresented: $viewModel.showingPopover) {
+                        VStack(alignment: .leading) {
+                            Text("Please, specify the time period for the report")
+                                .font(.title)
+                                .padding()
+                            HStack {
+                                DatePicker("From: ", selection: $viewModel.from,  displayedComponents: .date)
+                            }
+                            .padding()
+                            HStack {
+                                DatePicker("To: ", selection: $viewModel.to, displayedComponents: .date)
+                            }
+                            .padding()
+                            HStack {
+                                Spacer()
+                                Button {
+                                    if viewModel.employees {
+                                        Task {
+                                            await viewModel.getEmployeeReport()
+                                        }
+                                    }
+                                    if viewModel.general {
+                                        Task {
+                                            await viewModel.getGeneralReport()
+                                        }
+                                    }
+                                } label: {
+                                    Text("Get report")
+                                }
+                                .padding()
+                                .buttonStyle(.borderedProminent)
+                                Spacer()
+                            }
+                        }
+                        .padding()
+                        .onDisappear {
+                            viewModel.employees = false
+                            viewModel.general = false
+                        }
+                    }
                 Button {
                     Task {
                         await viewModel.exit()
@@ -56,49 +100,6 @@ struct SettingsView: View {
         }
         .onAppear {
             viewModel.setup(vm: connectionVM)
-        }
-        .popover(isPresented: $viewModel.isReportViewPresented) {
-            ReportView(data: viewModel.reportData, isEmployee: viewModel.isEmployee)
-        }
-        .popover(isPresented: $viewModel.showingPopover) {
-            VStack(alignment: .leading) {
-                Text("Please, specify the time period for the report")
-                    .font(.title)
-                    .padding()
-                HStack {
-                    DatePicker("From: ", selection: $viewModel.from,  displayedComponents: .date)
-                }
-                .padding()
-                HStack {
-                    DatePicker("To: ", selection: $viewModel.to, displayedComponents: .date)
-                }
-                .padding()
-                HStack {
-                    Spacer()
-                    Button {
-                        if viewModel.employees {
-                            Task {
-                                await viewModel.getEmployeeReport()
-                            }
-                        }
-                        if viewModel.general {
-                            Task {
-                                await viewModel.getGeneralReport()
-                            }
-                        }
-                    } label: {
-                        Text("Get report")
-                    }
-                    .padding()
-                    .buttonStyle(.borderedProminent)
-                    Spacer()
-                }
-            }
-            .padding()
-            .onDisappear {
-                viewModel.employees = false
-                viewModel.general = false
-            }
         }
     }
 }

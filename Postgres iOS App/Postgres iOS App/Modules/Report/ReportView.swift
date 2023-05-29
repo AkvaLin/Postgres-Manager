@@ -8,6 +8,14 @@
 import SwiftUI
 
 struct ReportView: View {
+#if os(iOS)
+    private let isIOS = true
+#else
+    private let isIOS = false
+#endif
+    
+    @EnvironmentObject var vm: SettingsViewModel
+    
     private var data: [ReportModel]
     private let isEmployee: Bool
     
@@ -17,28 +25,49 @@ struct ReportView: View {
     }
     
     var body: some View {
+        
         VStack {
-            List {
-                Grid {
-                    GridRow {
-                        Text(isEmployee ? "Name" : "Service")
-                        Text(isEmployee ? "Phone number" : "Count")
-                        Text(isEmployee ? "Rating" : "Total Cost")
-                    }
-                    .bold()
-                    Divider()
-                    ForEach(data) { datum in
+            if isIOS {
+                List {
+                    Grid {
                         GridRow {
-                            Text(datum.firstColumn)
-                            Text(datum.secondColumn)
-                            Text(datum.thirdColumn)
+                            Text(isEmployee ? "Name" : "Service")
+                            Text(isEmployee ? "Phone number" : "Count")
+                            Text(isEmployee ? "Rating" : "Total Cost")
                         }
-                        if datum.id != data.last?.id {
-                            Divider()
+                        .bold()
+                        Divider()
+                        ForEach(data) { datum in
+                            GridRow {
+                                Text(datum.firstColumn)
+                                Text(datum.secondColumn)
+                                Text(datum.thirdColumn)
+                            }
+                            if datum.id != data.last?.id {
+                                Divider()
+                            }
                         }
                     }
                 }
+            } else {
+                Table(data) {
+                    TableColumn(isEmployee ? "Name" : "Service", value: \.firstColumn)
+                    TableColumn(isEmployee ? "Phone number" : "Count", value: \.secondColumn)
+                    TableColumn(isEmployee ? "Rating" : "Total Cost", value: \.thirdColumn)
+                }
             }
+            Button {
+                vm.isReportViewPresented = false
+            } label: {
+                HStack {
+                    Image(systemName: "chevron.left")
+                        .padding()
+                    Text("Return")
+                        .padding()
+                }
+            }
+            .buttonStyle(.borderedProminent)
+            .padding()
         }
     }
 }
