@@ -73,6 +73,7 @@ struct LoginView: View {
         .alert(alertText, isPresented: $showingAlert) {
             Button("OK", role: .cancel) { }
         }
+        .padding()
     }
 }
 
