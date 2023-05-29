@@ -14,6 +14,7 @@ class LoginViewModel: ObservableObject {
     @Published var isPresented = false
     @Published var login: String
     @Published var password: String
+    @Published var isLoading = false
     
     // Database settings
     private let host = "db.tjytbokwkceokguvmtrh.supabase.co"
@@ -40,14 +41,25 @@ class LoginViewModel: ObservableObject {
     }
     
     public func connect(completion: @escaping (LoginResults) -> Void) async {
+        DispatchQueue.main.async { [weak self] in
+            self?.isLoading = true
+        }
         do {
             try await connection?.close()
         } catch let error {
             print("cannot close connection: \(error)")
+            DispatchQueue.main.async { [weak self] in
+                self?.isLoading = false
+            }
             completion(.unknownError)
         }
         
-        guard let eventLoopGroup = eventLoopGroup else { return }
+        guard let eventLoopGroup = eventLoopGroup else {
+            DispatchQueue.main.async { [weak self] in
+                self?.isLoading = false
+            }
+            return
+        }
         
         let configuration = PostgresConnection.Configuration(
             host: host,
@@ -62,22 +74,40 @@ class LoginViewModel: ObservableObject {
         } catch let error {
             print("error: \(error)")
             completion(.connectionError)
+            DispatchQueue.main.async { [weak self] in
+                self?.isLoading = false
+            }
             return
         }
         
         do {
             let checkPassword = try await connection?.query("SELECT check_password(\(login), \(password))", logger: logger)
-            guard let checkPassword = checkPassword else { completion(.dataError); return }
+            guard let checkPassword = checkPassword else {
+                DispatchQueue.main.async { [weak self] in
+                    self?.isLoading = false
+                }
+                completion(.dataError)
+                return
+            }
             do {
                 for try await result in checkPassword.decode((Bool).self) {
                     if result {
                         let rows = try await connection?.query("SELECT * FROM login_data WHERE login = \(login)", logger: logger)
-                        guard let rows = rows else { completion(.dataError); return }
+                        guard let rows = rows else {
+                            DispatchQueue.main.async { [weak self] in
+                                self?.isLoading = false
+                            }
+                            completion(.dataError)
+                            return
+                        }
                         for try await row in rows {
                             let roleCell = row.first { cell in
                                 cell.columnName == "role"
                             }
                             guard let roleCell = roleCell else {
+                                DispatchQueue.main.async { [weak self] in
+                                    self?.isLoading = false
+                                }
                                 completion(.dataError)
                                 return
                             }
@@ -94,15 +124,24 @@ class LoginViewModel: ObservableObject {
                                     UserDefaults.standard.login = nil
                                     UserDefaults.standard.password = nil
                                 }
+                                DispatchQueue.main.async { [weak self] in
+                                    self?.isLoading = false
+                                }
                                 completion(.success)
                             } catch let error {
                                 print("Role didnt change: \(error)")
+                                DispatchQueue.main.async { [weak self] in
+                                    self?.isLoading = false
+                                }
                                 clearData()
                                 completion(.connectionError)
                             }
                         }
                     } else {
                         print("Wrong password")
+                        DispatchQueue.main.async { [weak self] in
+                            self?.isLoading = false
+                        }
                         clearData()
                         completion(.passwordError)
                         return
@@ -110,12 +149,18 @@ class LoginViewModel: ObservableObject {
                 }
             } catch {
                 print("User doesnt exist")
+                DispatchQueue.main.async { [weak self] in
+                    self?.isLoading = false
+                }
                 clearData()
                 completion(.loginError)
                 return
             }
         } catch let error {
             print("query error: \(error)")
+            DispatchQueue.main.async { [weak self] in
+                self?.isLoading = false
+            }
             clearData()
             completion(.queryError)
             return
@@ -170,13 +215,15 @@ class LoginViewModel: ObservableObject {
         }
     }
     
-    public func addClientRow(phoneNumber: String, email: String, name: String) async {
+    public func addClientRow(phoneNumber: String, email: String, name: String, clouser: @escaping (Bool) -> Void) async {
         do {
             let status = 1
             let query = PostgresQuery(unicodeScalarLiteral: "insert into client (phone_number, email, client_status_id, name) VALUES ('\(phoneNumber)', '\(email)', \(status), '\(name)')")
             try await connection?.query(query, logger: logger)
+            clouser(true)
         } catch let error {
             print("Add client error: \(error.localizedDescription)")
+            clouser(false)
         }
     }
     
@@ -210,7 +257,7 @@ class LoginViewModel: ObservableObject {
         }
     }
     
-    public func register(login: String, password: String, age: Int, name: String, number: String, experience: Int, role: String, jobTitle: Int) async {
+    public func register(login: String, password: String, age: Int, name: String, number: String, experience: Int, role: String, jobTitle: Int, clouser: @escaping (RegisterResults) -> Void) async {
         do {
             let loginQuery = PostgresQuery(unicodeScalarLiteral: "insert into login_data values ('\(login)', '\(password)', '\(role.lowercased())')")
             try await connection?.query(loginQuery, logger: logger)
@@ -219,11 +266,14 @@ class LoginViewModel: ObservableObject {
                 let rating = 0
                 let insertQuery = PostgresQuery(unicodeScalarLiteral: "insert into employee values (default, '\(name)', \(jobTitle), \(est), '\(number)', \(experience), \(age), \(rating), '\(login)')")
                 try await connection?.query(insertQuery, logger: logger)
+                clouser(.success)
             } catch let error {
                 print("Insert error: \(error)")
+                clouser(.employeeError)
             }
         } catch let error {
             print("Register error: \(error)")
+            clouser(.loginDataError)
         }
     }
     
@@ -243,7 +293,7 @@ class LoginViewModel: ObservableObject {
         }
     }
     
-    public func addOrder(client: Int, employee: Int, totalCost: Double, rating: Double, date: Date, servicesID: [Int]) async {
+    public func addOrder(client: Int, employee: Int, totalCost: Double, rating: Double, date: Date, servicesID: [Int], clouser: @escaping (AddOrderResults) -> Void) async {
         do {
             let query = PostgresQuery(unicodeScalarLiteral: "insert into orders values (default, \(client), \(employee), \(totalCost), \(rating), '\(date.description)') returning order_id")
             let data = try await connection?.query(query, logger: logger)
@@ -258,10 +308,13 @@ class LoginViewModel: ObservableObject {
                     try await connection?.query(serviceQuery, logger: logger)
                 } catch let error {
                     print("Error add service: \(error.localizedDescription)")
+                    clouser(.serviceError)
                 }
             }
+            clouser(.success)
         } catch let error {
             print("Add order error: \(error.localizedDescription)")
+            clouser(.orderError)
         }
     }
     

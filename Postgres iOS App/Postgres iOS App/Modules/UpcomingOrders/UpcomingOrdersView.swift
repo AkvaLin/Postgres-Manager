@@ -14,34 +14,40 @@ struct UpcomingOrdersView: View {
     
     var body: some View {
         NavigationStack {
-            List {
-                ForEach(viewModel.ordersData, id: \.id) { order in
-                    VStack(alignment: .leading) {
-                        Text("ID: \(order.id)")
-                            .font(.caption2)
-                            .padding(.bottom, 1)
-                        Text("Employee: \(order.employeeName)")
-                        Text("Client: \(order.clientName)")
-                            .padding(.bottom, 1)
-                        Group {
-                            Text("Total cost: \(order.totalCost)")
-                            Text("Rating: \(order.rating)")
-                            Text("Date: \(order.date?.formatted(date: .abbreviated, time: .shortened) ?? Date().formatted(date: .abbreviated, time: .shortened))")
+            ZStack {
+                List {
+                    ForEach(viewModel.ordersData, id: \.id) { order in
+                        VStack(alignment: .leading) {
+                            Text("ID: \(order.id)")
+                                .font(.caption2)
+                                .padding(.bottom, 1)
+                            Text("Employee: \(order.employeeName)")
+                            Text("Client: \(order.clientName)")
+                                .padding(.bottom, 1)
+                            Group {
+                                Text("Total cost: \(order.totalCost)")
+                                Text("Rating: \(order.rating)")
+                                Text("Date: \(order.date?.formatted(date: .abbreviated, time: .shortened) ?? Date().formatted(date: .abbreviated, time: .shortened))")
+                            }
+                            .font(.footnote)
                         }
-                        .font(.footnote)
                     }
                 }
-            }
-            .listStyle(.inset)
-            .onAppear {
-                Task {
-                    await viewModel.setup(vm: connectionVM)
+                .listStyle(.inset)
+                .onAppear {
+                    viewModel.isLoading = true
+                    Task {
+                        await viewModel.setup(vm: connectionVM)
+                    }
                 }
-            }
-            .navigationTitle("Orders")
-            .refreshable {
-                Task {
-                    await viewModel.update()
+                .navigationTitle("Upcoming orders")
+                .refreshable {
+                    Task {
+                        await viewModel.update()
+                    }
+                }
+                if viewModel.isLoading {
+                    ProgressView()
                 }
             }
         }

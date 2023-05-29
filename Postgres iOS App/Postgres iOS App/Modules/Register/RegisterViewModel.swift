@@ -23,6 +23,9 @@ class RegisterViewModel: ObservableObject {
     
     @Published public var isLoginAndPasswordEntered = false
     @Published public var isDataEntered = false
+    @Published var isLoading = false
+    @Published var showLoginDataError = false
+    @Published var showEmployeeError = false
     
     private var viewModel: LoginViewModel? = nil
     
@@ -91,7 +94,10 @@ class RegisterViewModel: ObservableObject {
         await update()
     }
     
-    private func update() async {
+    public func update() async {
+        DispatchQueue.main.async { [weak self] in
+            self?.isLoading = true
+        }
         guard let viewModel = viewModel else { return }
         await viewModel.getJobTitleData() { data in
             DispatchQueue.main.async { [weak self] in
@@ -103,12 +109,16 @@ class RegisterViewModel: ObservableObject {
                     strongSelf.jobs.append(JobModel(tile: "None", id: -1))
                     strongSelf.selectedJob = strongSelf.jobs[0]
                 }
+                strongSelf.isLoading = false
             }
         }
     }
     
     public func register() async {
         guard let viewModel = viewModel else { return }
+        DispatchQueue.main.async { [weak self] in
+            self?.isLoading = true
+        }
         let intAge = Int(age) ?? 0
         let intExp = Int(workExperience) ?? 0
         await viewModel.register(login: login,
@@ -118,6 +128,23 @@ class RegisterViewModel: ObservableObject {
                                  number: phoneNumber,
                                  experience: intExp,
                                  role: selectedRole,
-                                 jobTitle: selectedJob.id)
+                                 jobTitle: selectedJob.id) { result in
+            switch result {
+            case .loginDataError:
+                DispatchQueue.main.async { [weak self] in
+                    self?.isLoading = false
+                    self?.showLoginDataError = true
+                }
+            case .employeeError:
+                DispatchQueue.main.async { [weak self] in
+                    self?.isLoading = false
+                    self?.showEmployeeError = true
+                }
+            case .success:
+                DispatchQueue.main.async { [weak self] in
+                    self?.isLoading = false
+                }
+            }
+        }
     }
 }

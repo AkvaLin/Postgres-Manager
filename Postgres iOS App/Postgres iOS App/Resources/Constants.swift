@@ -16,3 +16,15 @@ enum LoginResults {
     case success
     case queryError
 }
+
+enum AddOrderResults {
+    case orderError
+    case serviceError
+    case success
+}
+
+enum RegisterResults {
+    case loginDataError
+    case employeeError
+    case success
+}
