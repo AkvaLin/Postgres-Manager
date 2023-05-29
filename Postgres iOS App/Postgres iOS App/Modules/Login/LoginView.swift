@@ -17,56 +17,62 @@ struct LoginView: View {
 
     var body: some View {
         
-        VStack {
-            Text("Login:")
-            TextField("Enter login", text: $viewModel.login)
-                .padding(.bottom, 8)
-            
-            Text("Password:")
-            AnimatedSecureTextField(text: $viewModel.password, titleKey: "Enter password")
-                .padding(.bottom, 8)
-            
-            Button("Connect", action: {
-                Task {
-                    await viewModel.connect() { result in
-                        switch result {
-                        case .connectionError:
-                            alertText = "Не удалось установить соединение с базой данных"
-                            showingAlert = true
-                        case .loginError:
-                            alertText = "Пользователя с данным логином не существует"
-                            showingAlert = true
-                        case .passwordError:
-                            alertText = "Неверный пароль"
-                            showingAlert = true
-                        case .unknownError:
-                            alertText = "Неизвестная ошибка. Попробуйте позже"
-                            showingAlert = true
-                        case .dataError:
-                            alertText = "Ошибка базы данных"
-                            showingAlert = true
-                        case .success:
-                            DispatchQueue.main.async {
-                                viewModel.isPresented = true
+        ZStack {
+            VStack {
+                Text("Login:")
+                TextField("Enter login", text: $viewModel.login)
+                    .padding(.bottom, 8)
+                
+                Text("Password:")
+                AnimatedSecureTextField(text: $viewModel.password, titleKey: "Enter password")
+                    .padding(.bottom, 8)
+                
+                Button("Connect", action: {
+                    Task {
+                        await viewModel.connect() { result in
+                            switch result {
+                            case .connectionError:
+                                alertText = "Не удалось установить соединение с базой данных"
+                                showingAlert = true
+                            case .loginError:
+                                alertText = "Пользователя с данным логином не существует"
+                                showingAlert = true
+                            case .passwordError:
+                                alertText = "Неверный пароль"
+                                showingAlert = true
+                            case .unknownError:
+                                alertText = "Неизвестная ошибка. Попробуйте позже"
+                                showingAlert = true
+                            case .dataError:
+                                alertText = "Ошибка базы данных"
+                                showingAlert = true
+                            case .success:
+                                DispatchQueue.main.async {
+                                    viewModel.isPresented = true
+                                }
+                            case .queryError:
+                                alertText = "Не удалось отправить запрос к базе данных"
+                                showingAlert = true
                             }
-                        case .queryError:
-                            alertText = "Не удалось отправить запрос к базе данных"
-                            showingAlert = true
                         }
                     }
+                })
+                .buttonStyle(.borderedProminent)
+                .disabled(viewModel.login.isEmpty || viewModel.password.isEmpty || viewModel.isLoading)
+                .fullScreenCover(isPresented: $viewModel.isPresented) {
+                    MainView()
+                        .environmentObject(viewModel)
                 }
-            })
-            .buttonStyle(.borderedProminent)
-            .disabled(viewModel.login.isEmpty || viewModel.password.isEmpty)
-            .fullScreenCover(isPresented: $viewModel.isPresented) {
-                MainView()
-                    .environmentObject(viewModel)
+                
+                Toggle("Save login data", isOn: $viewModel.isSaveEnabled)
+                    .toggleStyle(iOSCheckboxToggleStyle())
+                    .tint(.primary)
+                    .padding()
             }
-            
-            Toggle("Save login data", isOn: $viewModel.isSaveEnabled)
-                .toggleStyle(iOSCheckboxToggleStyle())
-                .tint(.primary)
-                .padding()
+            .blur(radius: viewModel.isLoading ? 3 : 0)
+            if viewModel.isLoading {
+                ProgressView()
+            }
         }
         .padding()
         .textFieldStyle(.roundedBorder)

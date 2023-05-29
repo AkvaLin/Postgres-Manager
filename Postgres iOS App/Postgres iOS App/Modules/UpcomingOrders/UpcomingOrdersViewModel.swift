@@ -10,6 +10,7 @@ import Foundation
 class UpcomingOrdersViewModel: ObservableObject {
     
     @Published var ordersData = [OrderModel]()
+    @Published var isLoading = false
     
     private var viewModel: LoginViewModel? = nil
     
@@ -22,6 +23,7 @@ class UpcomingOrdersViewModel: ObservableObject {
         await viewModel?.getUpcomingOrders() { [weak self] data in
             guard let strongSelf = self else { return }
             DispatchQueue.main.async {
+                strongSelf.isLoading = false
                 strongSelf.ordersData = data.sorted(by: { first, second in
                     first.date ?? Date() <= second.date ?? Date()
                 })

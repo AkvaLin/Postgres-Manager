@@ -11,6 +11,7 @@ class OrderViewModel: ObservableObject {
     
     @Published var enableDelete: Bool
     @Published var showingAddOrderView = false
+    @Published var isLoading = false
     
     private var viewModel: LoginViewModel? = nil
     
@@ -36,6 +37,7 @@ class OrderViewModel: ObservableObject {
     public func update() async {
         await viewModel?.getAllOrdersData { [weak self] data in
             DispatchQueue.main.async { [weak self] in
+                self?.isLoading = false
                 self?.ordersData = data
             }
         }

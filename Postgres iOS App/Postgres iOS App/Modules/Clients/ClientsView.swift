@@ -14,51 +14,57 @@ struct ClientsView: View {
     
     var body: some View {
         NavigationStack {
-            List {
-                ForEach(viewModel.searchResults, id: \.id) { client in
-                    VStack(alignment: .leading) {
-                        Text(client.name)
-                            .padding(.bottom, 1)
-                        Group {
-                            Text(client.email)
-                            Text(client.phoneNumber)
+            ZStack {
+                List {
+                    ForEach(viewModel.searchResults, id: \.id) { client in
+                        VStack(alignment: .leading) {
+                            Text(client.name)
+                                .padding(.bottom, 1)
+                            Group {
+                                Text(client.email)
+                                Text(client.phoneNumber)
+                            }
+                            .font(.footnote)
+                            HStack {
+                                Text("ID: \(client.id)")
+                                Text("Status: \(client.status)")
+                            }
+                            .font(.caption2)
+                            .padding(.top, 1)
                         }
-                        .font(.footnote)
-                        HStack {
-                            Text("ID: \(client.id)")
-                            Text("Status: \(client.status)")
+                    }
+                    .onDelete(perform: viewModel.enableDelete ? delete : nil)
+                }
+                .toolbar {
+                    ToolbarItemGroup {
+                        Button {
+                            viewModel.showingAddClientSheet.toggle()
+                        } label: {
+                            Image(systemName: "plus.circle")
                         }
-                        .font(.caption2)
-                        .padding(.top, 1)
+                        if viewModel.enableDelete {
+                            EditButton()
+                        }
                     }
                 }
-                .onDelete(perform: viewModel.enableDelete ? delete : nil)
-            }
-            .toolbar {
-                ToolbarItemGroup {
-                    Button {
-                        viewModel.showingAddClientSheet.toggle()
-                    } label: {
-                        Image(systemName: "plus.circle")
-                    }
-                    if viewModel.enableDelete {
-                        EditButton()
+                .searchable(text: $viewModel.search)
+                .onAppear {
+                    viewModel.isLoading = true
+                    Task {
+                        await viewModel.setup(vm: connectionVM)
                     }
                 }
-            }
-            .searchable(text: $viewModel.search)
-            .onAppear {
-                Task {
-                    await viewModel.setup(vm: connectionVM)
+                .navigationDestination(isPresented: $viewModel.showingAddClientSheet) {
+                    AddClientView()
                 }
-            }
-            .navigationDestination(isPresented: $viewModel.showingAddClientSheet) {
-                AddClientView()
-            }
-            .listStyle(.inset)
-            .refreshable {
-                Task {
-                    await viewModel.update()
+                .listStyle(.inset)
+                .refreshable {
+                    Task {
+                        await viewModel.update()
+                    }
+                }
+                if viewModel.isLoading {
+                    ProgressView()
                 }
             }
             .navigationTitle("Clients")

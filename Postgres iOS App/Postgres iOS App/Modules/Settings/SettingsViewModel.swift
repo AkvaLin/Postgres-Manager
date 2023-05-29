@@ -15,6 +15,7 @@ class SettingsViewModel: ObservableObject {
     @Published var from = Date()
     @Published var to = Date()
     @Published var isReportViewPresented = false
+    @Published var isLoading = false
     
     public var reportData = [ReportModel]()
     public var isEmployee = false
@@ -27,9 +28,13 @@ class SettingsViewModel: ObservableObject {
     }
     
     public func getEmployeeReport() async {
+        DispatchQueue.main.async { [weak self] in
+            self?.isLoading = true
+        }
         await viewModel?.getEmployeeReport(from: dateToString(date: from), to: dateToString(date: to)) { [weak self] data in
             self?.reportData = data
             DispatchQueue.main.async { [weak self] in
+                self?.isLoading = false
                 self?.showingPopover = false
                 self?.isEmployee = true
                 self?.isReportViewPresented = true
@@ -38,9 +43,13 @@ class SettingsViewModel: ObservableObject {
     }
     
     public func getGeneralReport() async {
+        DispatchQueue.main.async { [weak self] in
+            self?.isLoading = true
+        }
         await viewModel?.getGeneralReport(from: dateToString(date: from), to: dateToString(date: to)) { [weak self] data in
             self?.reportData = data
             DispatchQueue.main.async { [weak self] in
+                self?.isLoading = false
                 self?.showingPopover = false
                 self?.isEmployee = false
                 self?.isReportViewPresented = true

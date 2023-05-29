@@ -44,37 +44,43 @@ struct SettingsView: View {
                             .environmentObject(viewModel)
                     }
                     .popover(isPresented: $viewModel.showingPopover) {
-                        VStack(alignment: .leading) {
-                            Text("Please, specify the time period for the report")
-                                .font(.title)
-                                .padding()
-                            HStack {
-                                DatePicker("From: ", selection: $viewModel.from,  displayedComponents: .date)
-                            }
-                            .padding()
-                            HStack {
-                                DatePicker("To: ", selection: $viewModel.to, displayedComponents: .date)
-                            }
-                            .padding()
-                            HStack {
-                                Spacer()
-                                Button {
-                                    if viewModel.employees {
-                                        Task {
-                                            await viewModel.getEmployeeReport()
-                                        }
-                                    }
-                                    if viewModel.general {
-                                        Task {
-                                            await viewModel.getGeneralReport()
-                                        }
-                                    }
-                                } label: {
-                                    Text("Get report")
+                        ZStack {
+                            VStack(alignment: .leading) {
+                                Text("Please, specify the time period for the report")
+                                    .font(.title)
+                                    .padding()
+                                HStack {
+                                    DatePicker("From: ", selection: $viewModel.from,  displayedComponents: .date)
                                 }
                                 .padding()
-                                .buttonStyle(.borderedProminent)
-                                Spacer()
+                                HStack {
+                                    DatePicker("To: ", selection: $viewModel.to, displayedComponents: .date)
+                                }
+                                .padding()
+                                HStack {
+                                    Spacer()
+                                    Button {
+                                        if viewModel.employees {
+                                            Task {
+                                                await viewModel.getEmployeeReport()
+                                            }
+                                        }
+                                        if viewModel.general {
+                                            Task {
+                                                await viewModel.getGeneralReport()
+                                            }
+                                        }
+                                    } label: {
+                                        Text("Get report")
+                                    }
+                                    .padding()
+                                    .buttonStyle(.borderedProminent)
+                                    .disabled(viewModel.isLoading)
+                                    Spacer()
+                                }
+                            }
+                            if viewModel.isLoading {
+                                ProgressView()
                             }
                         }
                         .padding()

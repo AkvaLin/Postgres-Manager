@@ -13,6 +13,7 @@ class ClientsViewModel: ObservableObject {
     @Published var enableDelete: Bool
     @Published var search = ""
     @Published var showingAddClientSheet = false
+    @Published var isLoading = false
     
     private var viewModel: LoginViewModel? = nil
     
@@ -79,6 +80,7 @@ class ClientsViewModel: ObservableObject {
         guard let viewModel = viewModel else { return }
         await viewModel.getAllClientsData() { data in
             DispatchQueue.main.async { [weak self] in
+                self?.isLoading = false
                 self?.clientsData = data
             }
         }
